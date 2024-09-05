@@ -643,7 +643,7 @@ def main():
     if 'selected_operation' not in st.session_state:
         st.session_state.selected_operation = None
     if 'gif_display_time' not in st.session_state:
-        st.session_state.gif_display_time = 5  # Default to 5 seconds
+        st.session_state.gif_display_time = 1  # Default to 5 seconds
     if 'question_count' not in st.session_state:
         st.session_state.question_count = 0
     if 'score' not in st.session_state:
