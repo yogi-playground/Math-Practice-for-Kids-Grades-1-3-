@@ -803,7 +803,7 @@ def main():
     #api_key = st.secrets["API_KEY"]
 
     
-    # Initialize the Authenticate class
+    # Initialize the Authenticate class 
     authenticator = Authenticate(
         secret_credentials_path='google_credentials.json',  # Path to your Google credentials JSON file
         cookie_name='math_practice_cookie',
