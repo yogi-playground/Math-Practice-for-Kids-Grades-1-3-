@@ -10,7 +10,8 @@ from googleapiclient.discovery import build
 import requests
 import logging
 import json
-
+import time
+import threading
 
 
 # Lists of feedback messages
@@ -836,6 +837,9 @@ def main():
         redirect_uri='https://yogi-math-practice.streamlit.app/'  # Update this for production
     )
     
+    def remove_success_message():
+        time.sleep(2)
+        success_placeholder.empty()
 
     # Check if we're handling the OAuth callback
     if 'code' in st.query_params:
@@ -853,6 +857,8 @@ def main():
             user_info = service.userinfo().get().execute()
 
             st.success("Authentication successful!")
+            # Start a thread to remove the message after 2 seconds
+            threading.Thread(target=remove_success_message).start()
             st.write(f"Welcome, {user_info['name']}!")
             st.session_state.user_info = user_info
             st.session_state.credentials = credentials.to_json()
@@ -871,14 +877,10 @@ def main():
     # Rest of your Streamlit app code goes here
     if 'credentials' in st.session_state:
         # User is authenticated, show the main app content
-        st.write("Here's the main content of your app")
+        st.write(".")
         # ... (your existing app logic)
 
-    # Add a logout button
-    if 'credentials' in st.session_state and st.button('Logout'):
-        del st.session_state.credentials
-        del st.session_state.user_info
-        st.rerun()
+   
         
         
 
@@ -938,13 +940,19 @@ def main():
     #display_reward_points()
     
     # Create a layout for the home button and title
-    col1, col2 = st.columns([1, 5])
+    col1, col2, col3 = st.columns([1, 4, 1])
     
     with col1:
         home_clicked = st.button("🏠 Home", key="home_button", help="Return to operation selection")
     
     with col2:
-        st.markdown("<h1 class='main-title'>Math Practice for Kids (Grades 1-3)</h1>", unsafe_allow_html=True)
+        st.markdown("<h2 class='main-title'>Math Practice for Kids (Grades 1-3)</h2>", unsafe_allow_html=True)
+    with col3:
+         # Add a logout button
+        if 'credentials' in st.session_state and st.button('Logout'):
+            del st.session_state.credentials
+            del st.session_state.user_info
+            st.rerun()
     
     # Handle home button click
     if home_clicked:
