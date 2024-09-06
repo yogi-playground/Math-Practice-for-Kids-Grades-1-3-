@@ -819,14 +819,14 @@ def main():
         redirect_uri='https://yogi-math-practice.streamlit.app/'  # Must match the redirect URI in Google Cloud Console
     )
 
-#TypeError: 'QueryParamsProxy' object is not callable
+
 
 
 
    # Check if we're handling the OAuth callback
     if 'code' in st.query_params:
         try:
-            code = st.query_params['code']
+            code = st.query_params.get('code')
             flow.fetch_token(code=code)
             credentials = flow.credentials
 
@@ -860,9 +860,9 @@ def main():
     if 'credentials' in st.session_state and st.button('Logout'):
         del st.session_state.credentials
         del st.session_state.user_info
-        st.experimental_rerun()
-    
-    
+        st.rerun()
+        
+        
 
     
     # Initialize session state variables
