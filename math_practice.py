@@ -7,6 +7,7 @@ from streamlit_google_auth import Authenticate
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import Flow
 import requests
+import logging
 
 
 
@@ -804,7 +805,8 @@ def generate_word_question(operation, number_range):
 def main():
     st.set_page_config(layout="wide")  # Set the page to wide mode for better layout
     #api_key = st.secrets["API_KEY"]
-
+    # Set up logging
+    logging.basicConfig(level=logging.DEBUG)
     # Set up OAuth 2.0 flow
     flow = Flow.from_client_secrets_file(
         'google_credentials.json',
@@ -818,15 +820,22 @@ def main():
         flow.fetch_token(code=code)
         credentials = flow.credentials
         
-        # Use the access token to make API requests
-        st.write("Authentication successful!")
-         # User is authenticated
-        st.write(f"Welcome, {st.session_state['user_info'].get('name')}!")
-        st.write(f"Access token: {credentials.token}")
-        # Display logout button
-        if st.button('Logout'):
-            credentials.logout()
-            st.rerun()
+        try:
+            flow.fetch_token(code=code)
+            credentials = flow.credentials
+            st.write("Authentication successful!")
+            st.write(f"Access token: {credentials.token}")
+            st.write(f"Welcome, {st.session_state['user_info'].get('name')}!")
+            st.write(f"Access token: {credentials.token}")
+            # Display logout button
+            if st.button('Logout'):
+                credentials.logout()
+                st.rerun()
+        except Exception as e:
+            st.error(f"An error occurred: {str(e)}")
+            logging.exception("Detailed error information:")
+            
+        
         
     else:
         # If we're not handling a callback, show the login button
