@@ -833,9 +833,9 @@ def main():
     flow = Flow.from_client_secrets_file(
         'google_credentials.json',
         scopes=scopes,
-        redirect_uri='https://yogi-math-practice.streamlit.app'  # Update this for production
+        redirect_uri='https://yogi-math-practice.streamlit.app/'  # Update this for production
     )
-     
+    
 
     # Check if we're handling the OAuth callback
     if 'code' in st.query_params:
