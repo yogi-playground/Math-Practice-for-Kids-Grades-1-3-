@@ -6,6 +6,7 @@ from loadSecret import loadconfig
 from streamlit_google_auth import Authenticate
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import Flow
+from googleapiclient.discovery import build
 import requests
 import logging
 
@@ -818,33 +819,48 @@ def main():
         redirect_uri='https://yogi-math-practice.streamlit.app/'  # Must match the redirect URI in Google Cloud Console
     )
 
-    # Check if we're handling the OAuth callback
-    if 'code' in st.query_params():
-        code = st.query_params()['code'][0]
-        flow.fetch_token(code=code)
-        credentials = flow.credentials
-        
+#TypeError: 'QueryParamsProxy' object is not callable
+
+
+
+   # Check if we're handling the OAuth callback
+    if 'code' in st.query_params:
         try:
+            code = st.query_params['code']
             flow.fetch_token(code=code)
             credentials = flow.credentials
-            st.write("Authentication successful!")
-            st.write(f"Access token: {credentials.token}")
-            st.write(f"Welcome, {st.session_state['user_info'].get('name')}!")
-            st.write(f"Access token: {credentials.token}")
-            # Display logout button
-            if st.button('Logout'):
-                credentials.logout()
-                st.rerun()
+
+            # Use the credentials to get user info
+            service = build('oauth2', 'v2', credentials=credentials)
+            user_info = service.userinfo().get().execute()
+
+            st.success("Authentication successful!")
+            st.write(f"Welcome, {user_info['name']}!")
+            st.session_state.user_info = user_info
+            st.session_state.credentials = credentials.to_json()
         except Exception as e:
-            st.error(f"An error occurred: {str(e)}")
+            st.error(f"An error occurred during authentication: {str(e)}")
             logging.exception("Detailed error information:")
-            
-        
-        
+    elif 'credentials' in st.session_state:
+        # User is already authenticated
+        credentials = Credentials.from_authorized_user_info(eval(st.session_state.credentials))
+        st.write(f"Welcome back, {st.session_state.user_info['name']}!")
     else:
-        # If we're not handling a callback, show the login button
+        # If we're not handling a callback and user is not authenticated, show the login button
         auth_url, _ = flow.authorization_url(prompt='consent')
         st.markdown(f'[Login with Google]({auth_url})')
+
+    # Rest of your Streamlit app code goes here
+    if 'credentials' in st.session_state:
+        # User is authenticated, show the main app content
+        st.write("Here's the main content of your app")
+        # ... (your existing app logic)
+
+    # Add a logout button
+    if 'credentials' in st.session_state and st.button('Logout'):
+        del st.session_state.credentials
+        del st.session_state.user_info
+        st.experimental_rerun()
     
     
 
