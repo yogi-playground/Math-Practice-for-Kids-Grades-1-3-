@@ -803,30 +803,30 @@ def main():
     #api_key = st.secrets["API_KEY"]
 
     
-    # # # Initialize the Authenticate class
-    # # authenticator = Authenticate(
-    # #     secret_credentials_path='google_credentials.json',  # Path to your Google credentials JSON file
-    # #     cookie_name='math_practice_cookie',
-    # #     cookie_key='your_secret_key',
-    # #     #redirect_uri='http://localhost:8501'  # Must match the authorized redirect URI in Google Console
-    # #     redirect_uri='https://yogi-math-practice.streamlit.app/'
-    # # )
+    # Initialize the Authenticate class
+    authenticator = Authenticate(
+        secret_credentials_path='google_credentials.json',  # Path to your Google credentials JSON file
+        cookie_name='math_practice_cookie',
+        cookie_key='your_secret_key',
+        #redirect_uri='http://localhost:8501'  # Must match the authorized redirect URI in Google Console
+        redirect_uri='https://yogi-math-practice.streamlit.app/'
+    )
 
-    # # # Check authentication
-    # # authenticator.check_authentification()
+    # Check authentication
+    authenticator.check_authentification()
 
-    # # # Display login button if not authenticated
-    # # if not st.session_state.get('connected', False):
-    # #     authorization_url = authenticator.get_authorization_url()
-    # #     st.markdown(f'[Login with Google]({authorization_url})')
-    # # else:
-    # #     # User is authenticated
-    # #     st.write(f"Welcome, {st.session_state['user_info'].get('name')}!")
+    # Display login button if not authenticated
+    if not st.session_state.get('connected', False):
+        authorization_url = authenticator.get_authorization_url()
+        st.markdown(f'[Login with Google]({authorization_url})')
+    else:
+        # User is authenticated
+        st.write(f"Welcome, {st.session_state['user_info'].get('name')}!")
         
-    # #     # Display logout button
-    # #     if st.button('Logout'):
-    # #         authenticator.logout()
-    # #         st.rerun()
+        # Display logout button
+        if st.button('Logout'):
+            authenticator.logout()
+            st.rerun()
 
     
     # Initialize session state variables
