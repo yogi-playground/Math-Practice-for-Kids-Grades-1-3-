@@ -2,6 +2,10 @@ import streamlit as st
 import random
 import base64
 import time
+from streamlit_google_auth import Authenticate
+
+
+
 
 # Lists of feedback messages
 correct_messages = [
@@ -31,12 +35,19 @@ incorrect_messages = [
 ]
 
 def display_home_button():
-    return st.button("🏠 Home12345", key="home_button")
+    return st.button("🏠 Home", key="home_button")
 
 
 def show_operation_selection():
     # Settings section
-    st.sidebar.header("Settings")    
+    st.sidebar.header("Settings") 
+     # Problem Type Selection
+    st.session_state.problem_type = st.sidebar.radio(
+        "Select Problem Type:",
+        options=["Number Problem", "Word Problem"],
+        index=0,  # Default to "Number Problem"
+        key="problem_type_radio"
+    )   
     max_digits = st.sidebar.slider("Select maximum number of digits:", min_value=1, max_value=5, value=1)
     
     min_limit, max_limit = get_number_range_limits(max_digits)
@@ -630,12 +641,195 @@ def create_operation_card(operation, color):
         <h3 style="color: white; margin: 0;">{operation}</h3>
     </div>
     """
+def practice_mathwordproblem(operation, number_range):
+    # This function will be similar to practice_math, but tailored for word problems
+    
+    # Add custom CSS for button styling and animations (same as in practice_math)
+    st.markdown("""
+    <style>
+    @keyframes blink {
+        0% { box-shadow: 0 0 15px #ffff00; }
+        50% { box-shadow: none; }
+        100% { box-shadow: 0 0 15px #ffff00; }
+    }
+    .blink-button {
+        animation: blink 1s linear infinite;
+    }
+    .disabled-button {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+    .stButton button {
+        width: 100%;
+        height: 100%;
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
+    if 'current_question' not in st.session_state:
+        st.session_state.current_question = generate_word_question(operation, number_range)
+        st.session_state.question_count += 1
+    if 'submitted' not in st.session_state:
+        st.session_state.submitted = False
+    if 'feedback' not in st.session_state:
+        st.session_state.feedback = None
+
+    display_reward_points()
+
+    st.markdown(f"<h2 style='text-align: center;'>{operation} Word Problem Practice</h2>", unsafe_allow_html=True)
+
+    question, correct_answer, options = st.session_state.current_question
+
+    st.write(f"Question {st.session_state.question_count}/15:")
+    st.markdown(question, unsafe_allow_html=True)
+    
+    # Add gap between answer options
+    st.markdown(
+        """
+        <style>
+        div.row-widget.stRadio > div{
+            flex-direction: column;
+            gap: 10px;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+    user_answer = st.radio("Select your answer:", options, key=f"user_answer_{operation}")
+
+    # Display feedback if available
+    if st.session_state.feedback:
+        if st.session_state.feedback[0] == "success":
+            st.success(st.session_state.feedback[1])
+        else:
+            st.error(st.session_state.feedback[1])
+        st.session_state.feedback = None  # Clear feedback after displaying
+
+    col1, col2, col3, col4 = st.columns(4)
+
+    with col1:
+        submit_disabled = st.session_state.get('submit_disabled', False)
+        submit_button = st.button("Submit", key=f"submit_{operation}", disabled=submit_disabled)
+        if submit_button and not submit_disabled:
+            st.session_state.submitted = True
+            st.session_state.attempted += 1
+            if user_answer == correct_answer:
+                feedback_message = random.choice(correct_messages)
+                st.session_state.feedback = ("success", f"✅ {feedback_message} You earned 1 reward point.")
+                st.session_state.score += 1
+                st.session_state.correct += 1
+                # Trigger right-side GIF display
+                display_rightside_gif("./img/pass/thumbs-up-2584_256.gif", width=300)
+            else:
+                feedback_message = random.choice(incorrect_messages)
+                st.session_state.feedback = ("error", f"❌ {feedback_message}")
+                display_rightside_gif("./img/fail/farded-emoticon-emoticon.gif", width=300)                        
+            st.session_state.submit_disabled = True
+            st.rerun()
+
+    with col2:
+        next_button_class = "blink-button" if st.session_state.get('submit_disabled', False) else ""
+        if st.button("Next Question", key=f"next_{operation}", help="Click to move to the next question"):
+            st.session_state.current_question = generate_word_question(operation, number_range)
+            st.session_state.question_count += 1
+            st.session_state.submitted = False
+            st.session_state.feedback = None
+            st.session_state.submit_disabled = False
+            st.rerun()
+        
+        # Add blinking effect using JavaScript
+        if next_button_class:
+            st.markdown(f"""
+            <script>
+                var nextButton = document.querySelector('button[kind="secondary"]:nth-of-type(2)');
+                nextButton.classList.add('{next_button_class}');
+            </script>
+            """, unsafe_allow_html=True)
+
+    with col3:
+        show_answer_class = "blink-button" if st.session_state.get('submit_disabled', False) else ""
+        if st.button("Show Answer", key=f"show_answer_{operation}", help="Click to see the correct answer"):
+            st.session_state.feedback = ("success", f"The correct answer is: {correct_answer}")
+            st.rerun()
+        
+        # Add blinking effect using JavaScript
+        if show_answer_class:
+            st.markdown(f"""
+            <script>
+                var showAnswerButton = document.querySelector('button[kind="secondary"]:nth-of-type(3)');
+                showAnswerButton.classList.add('{show_answer_class}');
+            </script>
+            """, unsafe_allow_html=True)
+
+    with col4:
+        if st.button("Finish Test", key=f"finish_{operation}") or st.session_state.question_count >= 15:
+            st.session_state.test_finished = True
+            st.rerun()
+
+    # Add the footer
+    create_footer()
+
+def generate_word_question(operation, number_range):
+    min_num, max_num = number_range
+    num1 = random.randint(min_num, max_num)
+    num2 = random.randint(min_num, max_num)
+    
+    if operation == "Addition":
+        question = f"If you have {num1} apples and your friend gives you {num2} more, how many apples do you have in total?"
+        answer = num1 + num2
+    elif operation == "Subtraction":
+        question = f"You have {num1} candies and give {num2} to your friend. How many candies do you have left?"
+        answer = num1 - num2
+    elif operation == "Multiplication":
+        question = f"If you have {num1} bags of marbles, and each bag contains {num2} marbles, how many marbles do you have in total?"
+        answer = num1 * num2
+    elif operation == "Division":
+        num1, num2 = max(num1, num2), min(num1, num2)
+        if num2 == 0:
+            num2 = 1
+        product = num1 * num2
+        question = f"If you have {product} stickers and want to divide them equally among {num2} friends, how many stickers will each friend get?"
+        answer = num1
+    else:  # Mixed
+        return generate_word_question(random.choice(["Addition", "Subtraction", "Multiplication", "Division"]), number_range)
+
+    options = [answer, answer + 1, answer - 1, answer + 2]
+    random.shuffle(options)
+    
+    return question, str(answer), [str(opt) for opt in options]
 
 def main():
     st.set_page_config(layout="wide")  # Set the page to wide mode for better layout
+    api_key = st.secrets["API_KEY"]
+
     
-        # Initialize session state variables
+    # # # Initialize the Authenticate class
+    # # authenticator = Authenticate(
+    # #     secret_credentials_path='google_credentials.json',  # Path to your Google credentials JSON file
+    # #     cookie_name='math_practice_cookie',
+    # #     cookie_key='your_secret_key',
+    # #     #redirect_uri='http://localhost:8501'  # Must match the authorized redirect URI in Google Console
+    # #     redirect_uri='https://yogi-math-practice.streamlit.app/'
+    # # )
+
+    # # # Check authentication
+    # # authenticator.check_authentification()
+
+    # # # Display login button if not authenticated
+    # # if not st.session_state.get('connected', False):
+    # #     authorization_url = authenticator.get_authorization_url()
+    # #     st.markdown(f'[Login with Google]({authorization_url})')
+    # # else:
+    # #     # User is authenticated
+    # #     st.write(f"Welcome, {st.session_state['user_info'].get('name')}!")
+        
+    # #     # Display logout button
+    # #     if st.button('Logout'):
+    # #         authenticator.logout()
+    # #         st.rerun()
+
+    
+    # Initialize session state variables
     if 'test_started' not in st.session_state:
         st.session_state.test_started = False
     if 'test_finished' not in st.session_state:
@@ -644,6 +838,8 @@ def main():
         st.session_state.selected_operation = None
     if 'gif_display_time' not in st.session_state:
         st.session_state.gif_display_time = 1  # Default to 5 seconds
+    if 'problem_type' not in st.session_state:
+        st.session_state.problem_type = "Number Problem"  # Default to Number Problem
     if 'question_count' not in st.session_state:
         st.session_state.question_count = 0
     if 'score' not in st.session_state:
@@ -652,6 +848,7 @@ def main():
         st.session_state.attempted = 0
     if 'correct' not in st.session_state:
         st.session_state.correct = 0
+    
         
     # Add custom CSS for layout and buttons
     st.markdown("""
@@ -718,7 +915,10 @@ def main():
     elif not st.session_state.test_started:
         show_operation_selection()
     else:
-        practice_math(st.session_state.selected_operation, st.session_state.number_range)
+        if st.session_state.problem_type == "Number Problem":
+            practice_math(st.session_state.selected_operation, st.session_state.number_range)
+        else:
+            practice_mathwordproblem(st.session_state.selected_operation, st.session_state.number_range)
 
     # Add the footer
     create_footer()
