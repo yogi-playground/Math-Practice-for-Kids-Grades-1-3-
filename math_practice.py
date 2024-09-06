@@ -807,10 +807,10 @@ def main():
     #api_key = st.secrets["API_KEY"]
     # Set up logging
 
-    st.button(st.secrets["google_credentials"]["g_client_secret"], key="home_button1", help="Return to operation selection")
     
     
-    #logging.basicConfig(level=logging.DEBUG)
+    
+    logging.basicConfig(level=logging.DEBUG)
     # Set up OAuth 2.0 flow
     flow = Flow.from_client_secrets_file(
         'google_credentials.json',
