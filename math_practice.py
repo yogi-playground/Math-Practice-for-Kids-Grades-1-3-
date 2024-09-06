@@ -800,7 +800,7 @@ def generate_word_question(operation, number_range):
 
 def main():
     st.set_page_config(layout="wide")  # Set the page to wide mode for better layout
-    api_key = st.secrets["API_KEY"]
+    #api_key = st.secrets["API_KEY"]
 
     
     # # # Initialize the Authenticate class
