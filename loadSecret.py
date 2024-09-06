@@ -2,16 +2,14 @@ import json
 import streamlit as st
 import os
 
-#{'Default': {'g-client_secret': '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'}}
-
 
 # Path to your google_credentials.json file
-json_file_path = ".\google_credentials.json"
+json_file_path = "google_credentials.json"
 # Read the client secret from secrets.toml
 try:
     client_secret = st.secrets["google_credentials"]["g_client_secret"]
 except KeyError:
-    st.error("Client secret not found in secrets.toml. Please add 'g_client_secret' to your secrets.")
+    st.error("Client secret not found in secrets.toml. Please add 'g-client_secret' to your secrets.")
     st.stop()
 def loadconfig():
     # Check if the file exists
