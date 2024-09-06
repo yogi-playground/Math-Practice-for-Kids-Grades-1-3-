@@ -820,9 +820,9 @@ def main():
     # Extract client_id and client_secret
     client_id = client_config['web']['client_id']
     client_secret = client_config['web']['client_secret']
-    st.write("Here's the main content of your app")
-    st.write('client_id:',client_id)
-    st.write('client_secret:',client_secret)
+    #st.write("Here's the main content of your app")
+    #st.write('client_id:',client_id)
+    #st.write('client_secret:',client_secret)
     # Set up OAuth 2.0 flow
     flow = Flow.from_client_secrets_file(
         'google_credentials.json',
