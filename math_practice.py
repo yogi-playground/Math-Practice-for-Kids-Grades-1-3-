@@ -9,6 +9,7 @@ from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
 import requests
 import logging
+import json
 
 
 
@@ -810,24 +811,34 @@ def main():
 
     
     
-    
+    loadconfig()
     logging.basicConfig(level=logging.DEBUG)
+    # Load client configuration from the JSON file
+    with open('google_credentials.json', 'r') as f:
+        client_config = json.load(f)
+    
+    # Extract client_id and client_secret
+    client_id = client_config['web']['client_id']
+    client_secret = client_config['web']['client_secret']
+    st.write("Here's the main content of your app")
+    st.write('client_id:',client_id)
+    st.write('client_secret:',client_secret)
     # Set up OAuth 2.0 flow
     flow = Flow.from_client_secrets_file(
         'google_credentials.json',
         scopes=['https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/userinfo.email'],
-        redirect_uri='https://yogi-math-practice.streamlit.app/'  # Must match the redirect URI in Google Cloud Console
+        redirect_uri='https://yogi-math-practice.streamlit.app/'  # Update this for production
     )
 
-
-
-
-
-   # Check if we're handling the OAuth callback
+    # Check if we're handling the OAuth callback
     if 'code' in st.query_params:
         try:
             code = st.query_params.get('code')
-            flow.fetch_token(code=code)
+            flow.fetch_token(
+                code=code,
+                client_id=client_id,
+                client_secret=client_secret,
+            )
             credentials = flow.credentials
 
             # Use the credentials to get user info
