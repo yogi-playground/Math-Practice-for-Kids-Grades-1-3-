@@ -2,9 +2,11 @@ import streamlit as st
 import random
 import base64
 import time
-#from loadSecret import loadconfig
+from loadSecret import loadconfig
 from streamlit_google_auth import Authenticate
-
+from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import Flow
+import requests
 
 
 
@@ -803,31 +805,35 @@ def main():
     st.set_page_config(layout="wide")  # Set the page to wide mode for better layout
     #api_key = st.secrets["API_KEY"]
 
-    
-    # Initialize the Authenticate class 
-    authenticator = Authenticate(
-        secret_credentials_path='google_credentials.json',  # Path to your Google credentials JSON file
-        cookie_name='math_practice_cookie',
-        cookie_key='your_secret_key',
-        #redirect_uri='http://localhost:8501'  # Must match the authorized redirect URI in Google Console
-        redirect_uri='https://yogi-math-practice.streamlit.app/'
+    # Set up OAuth 2.0 flow
+    flow = Flow.from_client_secrets_file(
+        'google_credentials.json',
+        scopes=['https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/userinfo.email'],
+        redirect_uri='https://yogi-math-practice.streamlit.app/'  # Must match the redirect URI in Google Cloud Console
     )
 
-    # Check authentication
-    authenticator.check_authentification()
-
-    # Display login button if not authenticated
-    if not st.session_state.get('connected', False):
-        authorization_url = authenticator.get_authorization_url()
-        st.markdown(f'[Login with Google]({authorization_url})')
-    else:
-        # User is authenticated
-        st.write(f"Welcome, {st.session_state['user_info'].get('name')}!")
+    # Check if we're handling the OAuth callback
+    if 'code' in st.experimental_get_query_params():
+        code = st.experimental_get_query_params()['code'][0]
+        flow.fetch_token(code=code)
+        credentials = flow.credentials
         
+        # Use the access token to make API requests
+        st.write("Authentication successful!")
+         # User is authenticated
+        st.write(f"Welcome, {st.session_state['user_info'].get('name')}!")
+        st.write(f"Access token: {credentials.token}")
         # Display logout button
         if st.button('Logout'):
-            authenticator.logout()
+            credentials.logout()
             st.rerun()
+        
+    else:
+        # If we're not handling a callback, show the login button
+        auth_url, _ = flow.authorization_url(prompt='consent')
+        st.markdown(f'[Login with Google]({auth_url})')
+    
+    
 
     
     # Initialize session state variables
