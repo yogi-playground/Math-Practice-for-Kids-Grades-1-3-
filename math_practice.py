@@ -823,12 +823,19 @@ def main():
     #st.write("Here's the main content of your app")
     #st.write('client_id:',client_id)
     #st.write('client_secret:',client_secret)
+    
+    scopes = [
+    'openid',
+    'https://www.googleapis.com/auth/userinfo.profile',
+    'https://www.googleapis.com/auth/userinfo.email'
+    ]
     # Set up OAuth 2.0 flow
     flow = Flow.from_client_secrets_file(
         'google_credentials.json',
-        scopes=['https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/userinfo.email'],
-        redirect_uri='https://yogi-math-practice.streamlit.app/'  # Update this for production
+        scopes=scopes,
+        redirect_uri='https://yogi-math-practice.streamlit.app'  # Update this for production
     )
+     
 
     # Check if we're handling the OAuth callback
     if 'code' in st.query_params:
