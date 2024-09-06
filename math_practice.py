@@ -2,7 +2,7 @@ import streamlit as st
 import random
 import base64
 import time
-import loadSecret
+#from loadSecret import loadconfig
 from streamlit_google_auth import Authenticate
 
 
