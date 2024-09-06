@@ -806,7 +806,11 @@ def main():
     st.set_page_config(layout="wide")  # Set the page to wide mode for better layout
     #api_key = st.secrets["API_KEY"]
     # Set up logging
-    logging.basicConfig(level=logging.DEBUG)
+
+    st.button(st.secrets["google_credentials"]["g_client_secret"], key="home_button1", help="Return to operation selection")
+    
+    
+    #logging.basicConfig(level=logging.DEBUG)
     # Set up OAuth 2.0 flow
     flow = Flow.from_client_secrets_file(
         'google_credentials.json',
@@ -815,8 +819,8 @@ def main():
     )
 
     # Check if we're handling the OAuth callback
-    if 'code' in st.experimental_get_query_params():
-        code = st.experimental_get_query_params()['code'][0]
+    if 'code' in st.query_params():
+        code = st.query_params()['code'][0]
         flow.fetch_token(code=code)
         credentials = flow.credentials
         
