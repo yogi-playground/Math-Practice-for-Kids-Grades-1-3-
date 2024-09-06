@@ -31,7 +31,7 @@ incorrect_messages = [
 ]
 
 def display_home_button():
-    return st.button("🏠 Home123", key="home_button")
+    return st.button("🏠 Home12345", key="home_button")
 
 
 def show_operation_selection():
