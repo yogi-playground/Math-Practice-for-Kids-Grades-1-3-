@@ -12,7 +12,11 @@ import logging
 import json
 import time
 import threading
-
+import os
+from datetime import datetime
+import Yogiutility
+import display_past_attempts as atp
+from urllib.parse import quote, unquote
 
 # Lists of feedback messages
 correct_messages = [
@@ -300,8 +304,21 @@ def display_second_title(operation):
         """,
         unsafe_allow_html=True
     )
+def create_result_json(operation):
+    result = {
+        "Datetime": datetime.now().isoformat(),
+        "Operation": operation,
+        "Score": st.session_state.score,
+        "Total Questions": st.session_state.question_count,
+        "Correct Answers": st.session_state.correct,
+        "Incorrect Answers": st.session_state.attempted - st.session_state.correct,
+        "Accuracy": f"{(st.session_state.correct / st.session_state.attempted) * 100:.2f}%" if st.session_state.attempted > 0 else "N/A",
+        "Number Range": f"{st.session_state.number_range[0]}-{st.session_state.number_range[1]}"
+    }
+    return json.dumps(result, indent=2)
 
 def practice_math(operation, number_range):
+    st.session_state.current_operation = operation
     # Add custom CSS for button styling and animations
     st.markdown("""
     <style>
@@ -420,8 +437,25 @@ def practice_math(operation, number_range):
             """, unsafe_allow_html=True)
 
     with col4:
-        if st.button("Finish Test", key=f"finish_{operation}") or st.session_state.question_count >= 15:
+         if st.button("Finish Test", key=f"finish_{operation}") or st.session_state.question_count >= 15:
             st.session_state.test_finished = True
+            
+            # Create JSON result
+            json_result = create_result_json(operation)
+            
+            # Define the directory and file name
+            directory = "users"
+            if not os.path.exists(directory):
+                os.makedirs(directory)  # Create the directory if it doesn't exist
+            
+            file_name = f"math_test_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+            file_path = os.path.join(directory, file_name)
+
+            # Save the JSON result to a file
+            with open(file_path, 'w') as json_file:
+                json_file.write(json_result)
+
+            st.success(f"Results saved to {file_path}")
             st.rerun()
 
     # Add the footer
@@ -429,7 +463,7 @@ def practice_math(operation, number_range):
  
 
 def practice_math_old(operation, number_range):
-    
+    st.session_state.current_operation = operation
      # Add this at the beginning of the function
     st.markdown("""
     <style>
@@ -649,6 +683,7 @@ def create_operation_card(operation, color):
     </div>
     """
 def practice_mathwordproblem(operation, number_range):
+    st.session_state.current_operation = operation
     # This function will be similar to practice_math, but tailored for word problems
     
     # Add custom CSS for button styling and animations (same as in practice_math)
@@ -806,11 +841,36 @@ def generate_word_question(operation, number_range):
     return question, str(answer), [str(opt) for opt in options]
 
 def main():
-    st.set_page_config(layout="wide")  # Set the page to wide mode for better layout
+    st.set_page_config(layout="wide")
+
+    # Check query parameters for page
+    if 'page' in st.query_params:
+        st.session_state.page = st.query_params['page']
+    elif 'page' not in st.session_state:
+        st.session_state.page = 'home'
+
+    # Sidebar navigation
+    st.sidebar.title("Navigation")
+    if st.sidebar.button("Home"):
+        st.query_params['page'] = 'home'
+        st.session_state.page = 'home'
+        st.rerun()
+    if st.sidebar.button("Past Attempts"):
+        st.query_params['page'] = 'past_attempts'
+        st.session_state.page = 'past_attempts'
+        st.rerun()
+
+    # Display the appropriate page
+    if st.session_state.page == 'home':
+        display_home_page()
+    elif st.session_state.page == 'past_attempts':
+       atp.display_past_attempts()
+
+def display_home_page():
+    #st.set_page_config(layout="wide")  # Set the page to wide mode for better layout
     #api_key = st.secrets["API_KEY"]
     # Set up logging
 
-    
     
     loadconfig()
     logging.basicConfig(level=logging.DEBUG)
@@ -856,7 +916,9 @@ def main():
             service = build('oauth2', 'v2', credentials=credentials)
             user_info = service.userinfo().get().execute()
 
-            st.success("Authentication successful!")
+             # Create a placeholder for the success message
+            success_placeholder = st.empty()
+            success_placeholder.success("Authentication successful!")
             # Start a thread to remove the message after 2 seconds
             threading.Thread(target=remove_success_message).start()
             st.write(f"Welcome, {user_info['name']}!")
@@ -878,12 +940,7 @@ def main():
     if 'credentials' in st.session_state:
         # User is authenticated, show the main app content
         st.write(".")
-        # ... (your existing app logic)
-
-   
-        
-        
-
+        # ... (your existing app logic)   
     
     # Initialize session state variables
     if 'test_started' not in st.session_state:
@@ -953,7 +1010,7 @@ def main():
             del st.session_state.credentials
             del st.session_state.user_info
             st.rerun()
-    
+    st.button('Logout')
     # Handle home button click
     if home_clicked:
         # Reset all session state variables
